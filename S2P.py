@@ -1,7 +1,7 @@
 from json import load
 
 ZIPPATH=r"C:\A\B\C"
-OUTPATH=r"C:\A\B\E\D"
+OUTPATH=r"C:\A\B\C\E\D"
 S2PSYSVAL_ANS="S2PSYSVAL__ans__"
 file=open(ZIPPATH+"\\project.json",encoding="utf-8")
 js=load(file)
@@ -41,6 +41,7 @@ def nest_down():
     global nestcnt,neststack,nextpoint
     if(nestcnt>0):
         nestcnt-=1
+    if(len(neststack)<=0):return
     if(neststack[-1][0]!=None):
         nextpoint=opes[neststack[-1][0]]
         if(neststack[-1][1]=="else"):
@@ -49,12 +50,11 @@ def nest_down():
     else:#None
             #さらにネストDOWN
         del neststack[-1]
-        
+        nextpoint="S2P_THE_END"#終了フラグ(先にある場合は上書きされる。)
         nest_down()
     if(len(neststack)>0):    
         del neststack[-1]
     return
-        
 
 #operator_XXX の処理。やっぱり再帰が一番!
 def write_operator_hikaku(condition_point):
@@ -113,9 +113,7 @@ while True:
             writestring=f'print({check_ope_or_lite(nextpoint["inputs"]["MESSAGE"])})\n'
         case "sensing_askandwait":
             writestring=f'{S2PSYSVAL_ANS} = input({check_ope_or_lite(nextpoint["inputs"]["QUESTION"])})\n'
-        case "control_forever":
-            pass
-        case "control_if_else":#if文
+        case "control_if_else":#if-else文
             neststack.append([nextpoint["inputs"]["SUBSTACK2"][1],"else"])
             neststack.append([nextpoint.get("next",{"next":None}),"next"])
             writestring=f'if {write_operator_hikaku(nextpoint["inputs"]["CONDITION"][1])}:\n'
@@ -123,9 +121,30 @@ while True:
             output.write(f'{" "*(nestcnt*4)}{writestring}')
             nestcnt+=1
             continue
-        case "control_if":#if-else
+        case "control_if":#if
             neststack.append([nextpoint.get("next",{"next":None}),"next"])
             writestring=f'if {write_operator_hikaku(nextpoint["inputs"]["CONDITION"][1])}:\n'
+            nextpoint=opes[nextpoint["inputs"]["SUBSTACK"][1]]
+            output.write(f'{" "*(nestcnt*4)}{writestring}')
+            nestcnt+=1
+            continue
+        case "control_repeat":#for
+            neststack.append([nextpoint.get("next",{"next":None}),"next"])
+            writestring=f'for i in range({check_ope_or_lite(nextpoint["inputs"]["TIMES"])}):\n'
+            nextpoint=opes[nextpoint["inputs"]["SUBSTACK"][1]]
+            output.write(f'{" "*(nestcnt*4)}{writestring}')
+            nestcnt+=1
+            continue
+        case "control_repeat_until":#while(!hoge)
+            neststack.append([nextpoint.get("next",{"next":None}),"next"])
+            writestring=f'while not{write_operator_hikaku(nextpoint["inputs"]["CONDITION"][1])}:\n'
+            nextpoint=opes[nextpoint["inputs"]["SUBSTACK"][1]]
+            output.write(f'{" "*(nestcnt*4)}{writestring}')
+            nestcnt+=1
+            continue
+        case "control_forever":#while(1)
+            neststack.append([None,"next"])
+            writestring="while True:\n"
             nextpoint=opes[nextpoint["inputs"]["SUBSTACK"][1]]
             output.write(f'{" "*(nestcnt*4)}{writestring}')
             nestcnt+=1
@@ -141,7 +160,11 @@ while True:
         if(neststack.__len__()==0):
             break#ネスト0
         nest_down()
-        continue
+        #(下げた結果)
+        if(nextpoint=="S2P_THE_END"):
+            break#ネスト0&&next==null
     else:
        nextpoint=opes[nextpoint["next"]]
 output.close()
+
+#TODO:変数か文字列リテラルかどうかを見抜く関数の実数。
