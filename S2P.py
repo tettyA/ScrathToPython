@@ -36,6 +36,26 @@ def check_ope_or_lite(check):
     else:
         return check_int_or_str(check[1][1])
 
+#ネストを一つ下げる。
+def nest_down():
+    global nestcnt,neststack,nextpoint
+    if(nestcnt>0):
+        nestcnt-=1
+    if(neststack[-1][0]!=None):
+        nextpoint=opes[neststack[-1][0]]
+        if(neststack[-1][1]=="else"):
+            output.write(f'{" "*(nestcnt*4)}else:\n')
+            nestcnt+=1
+    else:#None
+            #さらにネストDOWN
+        del neststack[-1]
+        
+        nest_down()
+    if(len(neststack)>0):    
+        del neststack[-1]
+    return
+        
+
 #operator_XXX の処理。やっぱり再帰が一番!
 def write_operator_hikaku(condition_point):
     hugo=""
@@ -82,6 +102,10 @@ def write_operator_hikaku(condition_point):
 
 nextpoint=beginpoint
 writestring=""
+
+neststack=[]#ネストの次のポイント。nullの時はNoneが入る。
+nestcnt=0#ネストのカウント
+
 while True:
     ts=nextpoint["opcode"]
     match ts:
@@ -89,15 +113,35 @@ while True:
             writestring=f'print({check_ope_or_lite(nextpoint["inputs"]["MESSAGE"])})\n'
         case "sensing_askandwait":
             writestring=f'{S2PSYSVAL_ANS} = input({check_ope_or_lite(nextpoint["inputs"]["QUESTION"])})\n'
-        case "control_if":#if文
-            writestring=write_operator_hikaku(nextpoint["inputs"]["CONDITION"][1])
+        case "control_forever":
+            pass
+        case "control_if_else":#if文
+            neststack.append([nextpoint["inputs"]["SUBSTACK2"][1],"else"])
+            neststack.append([nextpoint.get("next",{"next":None}),"next"])
+            writestring=f'if {write_operator_hikaku(nextpoint["inputs"]["CONDITION"][1])}:\n'
+            nextpoint=opes[nextpoint["inputs"]["SUBSTACK"][1]]
+            output.write(f'{" "*(nestcnt*4)}{writestring}')
+            nestcnt+=1
+            continue
+        case "control_if":#if-else
+            neststack.append([nextpoint.get("next",{"next":None}),"next"])
+            writestring=f'if {write_operator_hikaku(nextpoint["inputs"]["CONDITION"][1])}:\n'
+            nextpoint=opes[nextpoint["inputs"]["SUBSTACK"][1]]
+            output.write(f'{" "*(nestcnt*4)}{writestring}')
+            nestcnt+=1
+            continue
         case "data_setvariableto":#代入
             writestring=f'{S2UL(nextpoint["fields"]["VARIABLE"][0])} = {check_ope_or_lite(nextpoint["inputs"]["VALUE"])}\n'
         case "data_changevariableby":#値+
             writestring=f'{S2UL(nextpoint["fields"]["VARIABLE"][0])} += {check_ope_or_lite(nextpoint["inputs"]["VALUE"])}\n'
+    
+    output.write(f'{" "*(nestcnt*4)}{writestring}')
+
     if nextpoint["next"]==None:
-        break
+        if(neststack.__len__()==0):
+            break#ネスト0
+        nest_down()
+        continue
     else:
-       output.write(writestring)
        nextpoint=opes[nextpoint["next"]]
 output.close()
