@@ -16,6 +16,9 @@ ScatchのプロジェクトをPythonに変換するプログラムです。
 
 
 # 更新履歴
+## 0.0.4(4/14)
+ifとelseに対応。やったね!
+
 ## 0.0.3(4/13R5)
 notに対応。print(),input(),__len__(),"hoge"[N],field+=hogeに対応。
 
