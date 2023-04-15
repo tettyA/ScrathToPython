@@ -1,4 +1,4 @@
-# ScratchToPython
+# ScratchToPython(バージョン:0.0.6ζ)
 ScatchのプロジェクトをPythonに変換するプログラムです。
 
 # HowToUse
