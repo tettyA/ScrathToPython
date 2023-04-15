@@ -8,6 +8,10 @@ S2PSYSVAL_ANS="S2PSYSVAL__ans__"
 file=open(ZIPPATH+"\\project.json",encoding="utf-8")
 js=load(file)
 output=open(OUTPATH+"\\output.py",encoding="utf-8",mode='w')
+
+#宣言している変数名。
+hensu_dict={}
+
 #変数名の空白をアンダーバーに変える。
 def S2UL(st:str)->str:
     return st.replace(" ","_")
@@ -17,14 +21,19 @@ def check_int_or_str(checkval)->(int|str):
         return checkval
     else:
         if(checkval.isdigit()):return checkval
-        return f'"{checkval}"'
+
+        if checkval in hensu_dict:
+            return S2UL(checkval)
+        else:
+            return f'"{checkval}"'
 
 #import
 output.write("import math\n")
-output.write("import random\n")
+output.write("import random\n")\
 #変数宣言
 for i in js["targets"][0]["variables"]:
     output.write(f'{S2UL(js["targets"][0]["variables"][i][0])} = {check_int_or_str(js["targets"][0]["variables"][i][1])}\n')
+    hensu_dict[js["targets"][0]["variables"][i][0]]="exsist"#存在していることのみを知らせる。
 
 #命令がいっぱいあるところ。
 opes=js["targets"][1]["blocks"]
@@ -187,5 +196,3 @@ while True:
     else:
        nextpoint=opes[nextpoint["next"]]
 output.close()
-
-#TODO:変数か文字列リテラルかどうかを見抜く関数の実数。
