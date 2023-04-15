@@ -1,4 +1,6 @@
 from json import load
+import math
+import random
 
 ZIPPATH=r"C:\A\B\C"
 OUTPATH=r"C:\A\B\C\E\D"
@@ -10,13 +12,16 @@ output=open(OUTPATH+"\\output.py",encoding="utf-8",mode='w')
 def S2UL(st:str)->str:
     return st.replace(" ","_")
 #int型だったら、そのまま、str型だったら「""」を付け足す関数
-def check_int_or_str(checkval):
-    if type(checkval)==int:
+def check_int_or_str(checkval)->(int|str):
+    if type(checkval)==int or type(checkval)==float:
         return checkval
     else:
         if(checkval.isdigit()):return checkval
         return f'"{checkval}"'
 
+#import
+output.write("import math\n")
+output.write("import random\n")
 #変数宣言
 for i in js["targets"][0]["variables"]:
     output.write(f'{S2UL(js["targets"][0]["variables"][i][0])} = {check_int_or_str(js["targets"][0]["variables"][i][1])}\n')
@@ -78,6 +83,22 @@ def write_operator_hikaku(condition_point):
             hugo="*"
         case "operator_divide":
             hugo="/"
+        case "operator_mod":
+            hugo="%"
+        case "operator_mathop":
+            
+            match opes[condition_point]["fields"]["OPERATOR"][0]:
+                case "floor":mathkansu="math.floor"
+                case "abs": mathkansu="abs"
+                case "ceiling":mathkansu="math.ceil"
+                case "sin":mathkansu="math.sin"
+                case "cos":mathkansu="math.cos"
+                case "tan":mathkansu="math.tan"
+                case "log":mathkansu="math.log"
+                case "10 ^":mathkansu="10**"
+            return f'{mathkansu}({check_ope_or_lite(opes[condition_point]["inputs"]["NUM"])})'
+        case "operator_random":
+            return f'random.randint({check_ope_or_lite(opes[condition_point]["inputs"]["FROM"])},{check_ope_or_lite(opes[condition_point]["inputs"]["TO"])})'
         case "sensing_answer":
             return S2PSYSVAL_ANS
         case "operator_not":
@@ -90,7 +111,7 @@ def write_operator_hikaku(condition_point):
             pass
     
     
-    if hugo=="+" or hugo=="-" or hugo=="*" or hugo=="/":
+    if hugo in ["+","-","*","/","%"]:
         iptwrd="NUM"
     else:
         iptwrd="OPERAND"
@@ -153,7 +174,7 @@ while True:
             writestring=f'{S2UL(nextpoint["fields"]["VARIABLE"][0])} = {check_ope_or_lite(nextpoint["inputs"]["VALUE"])}\n'
         case "data_changevariableby":#値+
             writestring=f'{S2UL(nextpoint["fields"]["VARIABLE"][0])} += {check_ope_or_lite(nextpoint["inputs"]["VALUE"])}\n'
-    
+        
     output.write(f'{" "*(nestcnt*4)}{writestring}')
 
     if nextpoint["next"]==None:
