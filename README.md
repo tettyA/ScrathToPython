@@ -16,6 +16,8 @@ ScatchのプロジェクトをPythonに変換するプログラムです。
 
 
 # 更新履歴
+## 0.0.6(4/15)
+abs,floor,ceiling,mod,random,sin,cos,tan,log,10^に対応。
 ## 0.0.5(4/15)
 while,while 1,forに対応。プログラムの終了判定の改善。
 ## 0.0.4(4/14)
