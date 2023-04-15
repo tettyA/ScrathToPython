@@ -27,21 +27,7 @@ def check_int_or_str(checkval)->(int|str):
         else:
             return f'"{checkval}"'
 
-#import
-output.write("import math\n")
-output.write("import random\n")\
-#変数宣言
-for i in js["targets"][0]["variables"]:
-    output.write(f'{S2UL(js["targets"][0]["variables"][i][0])} = {check_int_or_str(js["targets"][0]["variables"][i][1])}\n')
-    hensu_dict[js["targets"][0]["variables"][i][0]]="exsist"#存在していることのみを知らせる。
 
-#命令がいっぱいあるところ。
-opes=js["targets"][1]["blocks"]
-beginpoint=""
-for i in opes:
-    if opes[i]["opcode"]=="event_whenflagclicked":
-        beginpoint=opes[i]
-        break
 
 #opeかリテラルかの判断(自動でcheck_int_or_strを呼び出す)し、展開結果を返す。
 def check_ope_or_lite(check):
@@ -130,6 +116,22 @@ def write_operator_hikaku(condition_point):
 
     return f'({op1} {hugo} {op2})'
 
+
+#import
+output.write("import math\n")
+output.write("import random\n")
+#変数宣言
+for i in js["targets"][0]["variables"]:
+    output.write(f'{S2UL(js["targets"][0]["variables"][i][0])} = {check_int_or_str(js["targets"][0]["variables"][i][1])}\n')
+    hensu_dict[js["targets"][0]["variables"][i][0]]="exsist"#存在していることのみを知らせる。
+
+#命令がいっぱいあるところ。
+opes=js["targets"][1]["blocks"]
+beginpoint=""
+for i in opes:
+    if opes[i]["opcode"]=="event_whenflagclicked":
+        beginpoint=opes[i]
+        break
 nextpoint=beginpoint
 writestring=""
 
